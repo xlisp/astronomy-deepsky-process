@@ -161,8 +161,8 @@ Ss, Hs, Os = (stretch(c, 0.08, white=nb_white(c)) for c in (S, Hh, O))
 Ss, Hs, Os = (denoise(c, 30) for c in (Ss, Hs, Os))
 
 # SHO (Hubble palette): R=SII, G=Ha, B=OIII, then remove green cast
-sho = np.dstack([0.6 * Ss + 0.4 * Hs, Hs, Os])
-sho = scnr(sho, 1, 0.5)
+sho = np.dstack([0.55 * Ss + 0.45 * Hs, 0.6 * Hs + 0.4 * Os, Os])
+sho = scnr(sho, 1, 0.3)
 Lnb = denoise(stretch(Hh / noise(Hh) ** 2 + O / noise(O) ** 2 + S / noise(S) ** 2, 0.10), 25)
 sho = lrgb_combine(cv2.GaussianBlur(sho, (0, 0), 1.2), Lnb, 1.5)
 save("M27_SHO", sho)
