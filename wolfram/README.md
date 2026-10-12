@@ -7,6 +7,8 @@
 > 代码按 Wolfram Language 13/14 的文档语义编写，算法与已验证的 Python 版逐行对应。首次运行如果报错，
 > 多半是某个内置函数的选项名或返回格式与版本不一致，按报错信息调整即可。
 
+更系统的 NumPy ↔ Wolfram 对照见 [docs/numpy_vs_wolfram_image_processing.md](../docs/numpy_vs_wolfram_image_processing.md)。
+
 | 文件 | 对应 Python | 内容 |
 |---|---|---|
 | `AstroTools.wl` | `scripts/astrotools.py` | 程序包：FITS 读写、鲁棒统计、星点检测、配准、σ-clip 叠加、去梯度、拉伸、合成、WCS、小波、反卷积、缩星 |
