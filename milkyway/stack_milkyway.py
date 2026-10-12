@@ -76,26 +76,32 @@ def mask_from_horizon(shape, horizon_y):
     return (np.arange(h)[:, None] < hy[None, :]).astype(np.float32)
 
 
-def auto_horizon(lum, per_tile=12):
-    """Sky = tiles with stars. For every tile column scan down from the top until star density drops.
-    The tile grid adapts to the number of stars so a sky tile holds ~per_tile stars."""
+def auto_horizon(lum, per_band=15):
+    """Sky = where the stars are. Split the frame into vertical bands; in each band walk down the sorted
+    star y positions and stop at the first gap much larger than the typical spacing (the ground has no
+    stars, isolated lights below the horizon are left out by the gap test)."""
     h, w = lum.shape
     st = at.detect_stars(lum, k=5, max_stars=4000)
     n = len(st["x"])
-    tiles = max(4, n / per_tile / 0.5)                  # assume ~half of the frame is sky
-    cols = int(np.clip(np.sqrt(tiles * w / h), 4, 48))
-    rows = int(np.clip(tiles / cols, 3, 36))
-    cnt, _, _ = np.histogram2d(st["y"], st["x"], bins=[rows, cols], range=[[0, h], [0, w]])
-    top = cnt[: max(1, rows // 4)]
-    ref = np.percentile(top, 75)                        # density in the top band = clear sky
-    sky = cnt >= max(1, 0.3 * ref)
-    hy = np.zeros(cols)
+    cols = int(np.clip(n / per_band, 4, 64))
+    hy = np.full(cols, np.nan)
     for j in range(cols):
-        i = 0
-        while i < rows and (sky[i, j] or (i + 1 < rows and sky[i + 1, j])):  # tolerate 1-tile gaps
-            i += 1
-        hy[j] = i * h / rows
-    hy = np.array([np.median(hy[max(0, j - 1):j + 2]) for j in range(cols)])   # smooth outliers
+        ys = np.sort(st["y"][(st["x"] >= j * w / cols) & (st["x"] < (j + 1) * w / cols)])
+        if len(ys) < 3:
+            continue
+        d = np.diff(np.r_[0, ys])
+        g = np.median(d)
+        big = np.nonzero(d > max(6 * g, 0.1 * h))[0]
+        last = (big[0] - 1) if len(big) and big[0] > 0 else len(ys) - 1
+        hy[j] = min(h, ys[last] + g)
+    if not np.isfinite(hy).any():
+        return np.zeros(w), n
+    dev = np.abs(hy - np.nanmedian(hy))
+    hy[dev > 3 * at.mad_std(hy[np.isfinite(hy)]) + 0.05 * h] = np.nan   # bands fooled by a random gap
+    ok = np.isfinite(hy)
+    hy = np.interp(np.arange(cols), np.nonzero(ok)[0], hy[ok])
+    p = np.pad(hy, 1, mode="edge")
+    hy = np.median(np.stack([p[:-2], p[1:-1], p[2:]]), 0)                  # light smoothing
     return np.interp(np.arange(w), (np.arange(cols) + .5) * w / cols, hy), n
 
 
@@ -191,7 +197,8 @@ def ransac_homography(ref, src, thr=3.0, iters=400, rng=np.random.default_rng(0)
             t = t0.fit(ref[s], src[s])
         except np.linalg.LinAlgError:
             continue
-        inl = np.linalg.norm(t.apply(ref) - src, axis=1) < thr
+        with np.errstate(divide="ignore", invalid="ignore"):
+            inl = np.linalg.norm(t.apply(ref) - src, axis=1) < thr
         if inl.sum() > best.sum():
             best = inl
     return best
@@ -294,7 +301,7 @@ def main():
     ap.add_argument("--feather", type=float, default=0.006, help="mask blur, fraction of width")
     ap.add_argument("--darks", nargs="+", help="dark frames (same ISO/exposure/temperature)")
     ap.add_argument("--bin", type=int, default=1, help="2 = half resolution, 4x faster, less noise")
-    ap.add_argument("--sigma", type=float, default=2.5, help="rejection kappa (0 = plain mean)")
+    ap.add_argument("--sigma", type=float, default=3.0, help="rejection kappa (0 = plain mean)")
     ap.add_argument("--ground", choices=["mean", "median"], default="mean",
                     help="ground stack: sigma-clipped mean, or median (more robust to car lights)")
     ap.add_argument("--gradient", action="store_true", help="remove light-pollution gradient from sky")
@@ -342,10 +349,13 @@ def main():
 
     def sky_stars(img):
         l = img.mean(-1)
-        l = np.where(mask > 0.5, l, np.median(l[mask > 0.5]))
+        sky = l[mask > 0.5]
+        fill = np.median(sky) + at.mad_std(sky - np.median(sky)) * rng.standard_normal(l.shape)
+        l = np.where(mask > 0.5, l, fill.astype(np.float32))   # same noise level -> right threshold
         st = at.detect_stars(l, k=5, max_stars=800)
         return np.c_[st["x"], st["y"]]
 
+    rng = np.random.default_rng(0)
     ref_xy = sky_stars(ref)
     ref_hp = highpass_bin(lum, mask)
     print(f"reference {os.path.basename(files[ref_i])}: {W}x{H}, {len(ref_xy)} stars, "

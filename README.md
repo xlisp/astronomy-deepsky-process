@@ -12,6 +12,7 @@
 - [4. 工具脚本 scripts/](#4-工具脚本-scripts)
 - [5. 核心算法原理速查](#5-核心算法原理速查)
 - [6. 局限与拍摄建议](#6-局限与拍摄建议)
+- [7. 银河 / 星野叠加 milkyway/](#7-银河--星野叠加-milkyway)
 
 ---
 
@@ -319,3 +320,18 @@ python scripts/star_reduce.py M27_LRGB.tif --mask-only -o starmask.png
   BlurXTerminator、NoiseXTerminator。
 - `scripts/` 中的反卷积、小波、色彩校准都是教学级的简化实现，效果不及 PI 的 SPCC 和 AI 工具，
   但原理一致，便于理解和批处理。
+
+---
+
+## 7. 银河 / 星野叠加 milkyway/
+
+固定三脚架 + 广角镜头拍摄的银河照片，星空在旋转、地景不动、镜头畸变大，所以单独做了一套流程
+（对标 Sequator / Starry Landscape Stacker）：天空按星点用 poly2 变换对齐后 σ-clip 叠加，
+地景不对齐叠加，再用（自动识别或手绘的）天空遮罩羽化融合。
+
+```bash
+python milkyway/exposure_calc.py --focal 14 --fnum 2.8 --pixel 5.9     # NPF 法则算最长曝光
+python milkyway/stack_milkyway.py "shots/*.ARW" -o out/ --darks darks/*.ARW
+```
+
+详见 [milkyway/README.md](milkyway/README.md)。
