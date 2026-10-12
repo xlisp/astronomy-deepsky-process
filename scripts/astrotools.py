@@ -67,6 +67,7 @@ def _to_unit(a):
 
 def save_image(path, img, header=None, history=None):
     """Save by extension. Non-FITS outputs expect data in [0,1]: .tif -> 16 bit, .png/.jpg -> 8 bit."""
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     if is_fits(path):
         return save_fits(path, img, header, history)
     img = np.clip(np.nan_to_num(img), 0, 1)

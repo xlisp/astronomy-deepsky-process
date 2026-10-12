@@ -41,7 +41,7 @@ def main():
         r["weight"] = (r["flux"] / r["noise"]) ** 2 / r["fwhm"] ** 2 if n else 0.0
         rows.append(r)
         print(f"  {os.path.basename(f)}: stars={n} fwhm={r['fwhm']:.2f} ecc={r['ecc']:.2f} "
-              f"bkg={r['bkg']:.1f} noise={r['noise']:.2f}")
+              f"bkg={r['bkg']:.4g} noise={r['noise']:.4g}")
 
     wmax = max(r["weight"] for r in rows) or 1
     def robust(k):
@@ -65,7 +65,7 @@ def main():
     print(f"\n{'file':<40} {'stars':>5} {'fwhm':>6} {'ecc':>5} {'noise':>8} {'weight':>6}  status")
     for r in sorted(rows, key=lambda r: -r["weight"]):
         print(f"{os.path.basename(r['file'])[-40:]:<40} {r['stars']:5d} {r['fwhm']:6.2f} {r['ecc']:5.2f} "
-              f"{r['noise']:8.2f} {r['weight']:6.3f}  {r['status']}")
+              f"{r['noise']:8.3g} {r['weight']:6.3f}  {r['status']}")
     ok = [r for r in rows if r["status"] == "ok"]
     print(f"\naccepted {len(ok)}/{len(rows)}")
     if a.csv:

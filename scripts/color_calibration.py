@@ -54,7 +54,7 @@ def calibrate(rgb, max_stars=300):
     rg, bgr = np.median(f[ok, 0] / f[ok, 1]), np.median(f[ok, 2] / f[ok, 1])
     scale = np.array([1 / rg, 1.0, 1 / bgr], np.float32)
     print(f"background R,G,B = {bg[0]:.4g}, {bg[1]:.4g}, {bg[2]:.4g}")
-    print(f"{ok.sum()} stars: R/G={rg:.3f} B/G={bgr:.3f} -> channel scale {scale.round(3).tolist()}")
+    print(f"{ok.sum()} stars: R/G={rg:.3f} B/G={bgr:.3f} -> channel scale {[round(float(v), 3) for v in scale]}")
     return rgb * scale
 
 
