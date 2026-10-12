@@ -18,6 +18,9 @@ Wolfram Language（Mathematica）在数组与图像处理上的思路和写法�
 
 ## 1. 历史：数组编程的家谱
 
+> 更完整的历史（各数学软件简史、NumPy 每个函数名的出处）见 [array_computing_history.md](array_computing_history.md)；
+> 加入 MATLAB 的三方图像处理对比见 [matlab_numpy_wolfram_image_processing.md](matlab_numpy_wolfram_image_processing.md)。
+
 ### 1.1 时间线
 
 | 年份 | 事件 | 意义 |

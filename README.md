@@ -366,5 +366,8 @@ wolframscript -file wolfram/compose.wls python      # 用 Python 叠出的 maste
 一句话总结：**PI 适合出片，Python 适合批处理和自动化，Wolfram 适合研究算法和交互探索**。
 Wolfram 的代码量最少，内置图像处理函数最全，但需要授权，天文专用生态也比较薄弱。
 
-> 延伸阅读：[NumPy 与 Wolfram Language 图像处理对比学习](docs/numpy_vs_wolfram_image_processing.md)
-> （数组编程的历史渊源、数据模型、索引、广播与线程化、图像坐标系、速查表，以及本仓库算法的逐行对照）。
+> 延伸阅读（[docs/](docs/README.md)）：
+> - [数组计算史：从 APL、MATLAB、Mathematica 到 NumPy，函数名的出处](docs/array_computing_history.md)
+> - [叠加与反卷积的来历：为什么平均能降噪，反卷积最早用在哪里](docs/stacking_deconvolution_history.md)（附可运行的 numpy 实验）
+> - [MATLAB vs NumPy vs Wolfram 图像处理详细对比](docs/matlab_numpy_wolfram_image_processing.md)
+> - [NumPy 与 Wolfram 语言基础对比](docs/numpy_vs_wolfram_image_processing.md)
