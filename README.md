@@ -13,6 +13,7 @@
 - [5. 核心算法原理速查](#5-核心算法原理速查)
 - [6. 局限与拍摄建议](#6-局限与拍摄建议)
 - [7. 银河 / 星野叠加 milkyway/](#7-银河--星野叠加-milkyway)
+- [8. Wolfram Language 版本 wolfram/](#8-wolfram-language-版本-wolfram)
 
 ---
 
@@ -335,3 +336,32 @@ python milkyway/stack_milkyway.py "shots/*.ARW" -o out/ --darks darks/*.ARW
 ```
 
 详见 [milkyway/README.md](milkyway/README.md)。
+
+---
+
+## 8. Wolfram Language 版本 wolfram/
+
+用 Mathematica / wolframscript 把 `process/` 的流程又实现了一遍（`AstroTools.wl` + `stack.wls` + `compose.wls` + `tools.wls`），
+用来对比三种做法。**这部分代码尚未在真实 Wolfram 内核上运行过**，详见 [wolfram/README.md](wolfram/README.md)。
+
+```bash
+wolframscript -file wolfram/stack.wls && wolframscript -file wolfram/compose.wls
+wolframscript -file wolfram/compose.wls python      # 用 Python 叠出的 master 合成，对比两边结果
+```
+
+| 步骤 | PixInsight | Python | Wolfram |
+|---|---|---|---|
+| 读 FITS | 打开文件 | `astropy.io.fits` | 自写解析器 `ReadFITS`（`BinaryReadList`，大端） |
+| 星点检测 | StarDetector | `sep.extract` | `MorphologicalComponents` + `ComponentMeasurements` |
+| 配准 | StarAlignment | astroalign 三角形 + 引导匹配 | 相位相关 `Fourier` + `Nearest` + `FindGeometricTransform` |
+| 重采样 | Lanczos-3 | `cv2.warpAffine` | `ImagePerspectiveTransformation` |
+| 叠加 | ImageIntegration | numpy σ-clip | `Median` 作用于 3 维数组 + 掩膜加权 |
+| 去梯度 | ABE / DBE | `np.linalg.lstsq` | `LeastSquares` |
+| 拉伸 | STF / HT | MTF 公式 | 同一 MTF 公式，可用 `Manipulate` 实时调参 |
+| LRGB | LRGBCombination | `cv2.cvtColor` Lab | `ColorConvert[..., "LAB"]` |
+| 反卷积 | Deconvolution / BXT | 手写 RL | `ImageDeconvolve[..., Method -> "RichardsonLucy"]` |
+| 小波 | MLT | 手写 starlet | 手写 starlet，或 `StationaryWaveletTransform` |
+| 目标坐标 | ImageSolver / 注释 | `astropy.wcs` | 自写 TAN 投影 + `NebulaData` 内置天体数据 |
+
+一句话总结：**PI 适合出片，Python 适合批处理和自动化，Wolfram 适合研究算法和交互探索**。
+Wolfram 的代码量最少，内置图像处理函数最全，但需要授权，天文专用生态也比较薄弱。
