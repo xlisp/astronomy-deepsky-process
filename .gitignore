@@ -22,3 +22,6 @@
 *.ORF
 *.RW2
 *.DNG
+*.ser
+*.avi
+planetary/demo_out/

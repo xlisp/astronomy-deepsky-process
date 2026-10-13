@@ -86,7 +86,7 @@ def stack(F, keep=0.25, ap_size=32, min_bright=0.15, ref_frames=None, sigma=1.0,
     dy, dx = shifts_to(ref, L, power=power)
     A = align(L, dy, dx)
     ref = A[order[:nr]].mean(0)
-    log(f"global shifts: rms {np.hypot(dy - dy.mean(), dx - dx.mean()).std():.2f} px, "
+    log(f"global shifts: rms {np.sqrt(np.mean((dy - dy.mean()) ** 2 + (dx - dx.mean()) ** 2)):.2f} px, "
         f"range y {dy.min():+.1f}..{dy.max():+.1f}, x {dx.min():+.1f}..{dx.max():+.1f}; reference = best {nr}")
 
     sc = float(upscale)

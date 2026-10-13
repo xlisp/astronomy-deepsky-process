@@ -14,6 +14,7 @@
 - [6. 局限与拍摄建议](#6-局限与拍摄建议)
 - [7. 银河 / 星野叠加 milkyway/](#7-银河--星野叠加-milkyway)
 - [8. Wolfram Language 版本 wolfram/](#8-wolfram-language-版本-wolfram)
+- [9. 行星后期 planetary/](#9-行星后期-planetary)
 
 ---
 
@@ -343,6 +344,24 @@ python milkyway/stack_milkyway.py "shots/*.ARW" -o out/ --darks darks/*.ARW
 
 用 Mathematica / wolframscript 把 `process/` 的流程又实现了一遍（`AstroTools.wl` + `stack.wls` + `compose.wls` + `tools.wls`），
 用来对比三种做法。**这部分代码尚未在真实 Wolfram 内核上运行过**，详见 [wolfram/README.md](wolfram/README.md)。
+
+---
+
+## 9. 行星后期 planetary/
+
+行星（木星、土星、火星）用的是幸运成像：几千帧毫秒级短曝光视频，挑最清楚的帧、多点对齐叠加、小波锐化，
+再去掉行星自转。对标 **PIPP → AutoStakkert!4 → RegiStax 6 → WinJUPOS** 四件套，只依赖 numpy：
+
+```bash
+python planetary/demo.py                                   # 仿真 3 段视频走完全流程，与真值比较
+python planetary/prep.py capture.ser -o pipp.ser --crop 320            # PIPP
+python planetary/stack.py pipp.ser -o stack.tif --keep 20%             # AutoStakkert!4
+python planetary/wavelets.py stack.tif -o final.png --rgb-align        # RegiStax 6
+python planetary/derotate.py stack stacks/*.tif -o derot.tif --de 3    # WinJUPOS
+```
+
+详见 [planetary/README.md](planetary/README.md)，流程对比 [planetary/docs/software_comparison.md](planetary/docs/software_comparison.md)，
+原理 [planetary/docs/principles.md](planetary/docs/principles.md)。
 
 ```bash
 wolframscript -file wolfram/stack.wls && wolframscript -file wolfram/compose.wls

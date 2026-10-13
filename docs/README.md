@@ -8,6 +8,8 @@
 | [deepsky_postprocessing_pixinsight.md](deepsky_postprocessing_pixinsight.md) | 深空后期流程篇：为什么要 DBE、PixInsight 全流程（预处理 → 线性 → 拉伸 → 非线性）、发射星云 / SHO·HOO / 星系分别怎么处理、工具演变时间线、常见错误 |
 | [matlab_numpy_wolfram_image_processing.md](matlab_numpy_wolfram_image_processing.md) | MATLAB vs NumPy vs Wolfram 图像处理详细对比：类型约定、坐标系、默认参数差异、13 类操作的三语言代码 |
 | [numpy_vs_wolfram_image_processing.md](numpy_vs_wolfram_image_processing.md) | NumPy vs Wolfram 语言基础对比：数据模型、索引、广播与线程化、归约、速查表 |
+| [../planetary/docs/software_comparison.md](../planetary/docs/software_comparison.md) | 行星后期四件套对比：PIPP / AutoStakkert!4 / RegiStax 6 / WinJUPOS 的分工、逐步骤对比、参数对照、典型工作流 |
+| [../planetary/docs/principles.md](../planetary/docs/principles.md) | 行星后期原理：大气湍流与幸运成像、相位相关、多点对齐、小波锐化、大气色散、扁球体去自转几何 |
 | [demos/stack_deconv_history_demo.py](demos/stack_deconv_history_demo.py) | 可运行的数值实验（只依赖 numpy）：√N 定律、中值效率、σ-clip；逆滤波、van Cittert、维纳、Tikhonov、RL、CLEAN 对比 |
 
 建议阅读顺序：校准帧 → 后期流程 → 历史篇 → 叠加与反卷积 → 三方对比 → NumPy/Wolfram 细节。
