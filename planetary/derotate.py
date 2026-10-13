@@ -46,6 +46,23 @@ def measure(img, a):
     return dict(cx=d["cx"], cy=d["cy"], a=a.radius or d["a"], north=north, mirror=a.mirror)
 
 
+def session_geometry(imgs, a):
+    """Measure every image, then share radius and pole angle (one camera orientation per session)."""
+    geoms = [measure(i, a) for i in imgs]
+    r = a.radius or float(np.median([g["a"] for g in geoms]))
+    north = a.north if a.north is not None else float(np.median([g["north"] for g in geoms]))
+    for g in geoms:
+        g["a"], g["north"] = r, north
+    return geoms
+
+
+def refine_centre(img, delta, g, ref_img, ref_g, a):
+    """Derotate, then correct the source centre by the residual shift against the reference image."""
+    o, w = derotate_image(img, delta, g, ref_g, a.flattening, a.de)
+    dy, dx, _ = pt.phase_correlate(pt.luminance(ref_img), pt.luminance(o))
+    return dict(g, cx=g["cx"] + float(dx), cy=g["cy"] + float(dy))
+
+
 def derotate_image(img, delta, gs, go, f, de, mu_power=1.0):
     """Re-project img (geometry gs) to the rotation state delta degrees later, on geometry go.
 
@@ -131,16 +148,18 @@ def cmd_measure(a):
 def cmd_stack(a):
     imgs = [pt.load(f) for f in a.inputs]
     times = get_times(a.inputs, a)
-    geoms = [measure(i, a) for i in imgs]
-    if a.radius is None:                      # all images of one session share the scale
-        r = float(np.median([g["a"] for g in geoms]))
-        for g in geoms:
-            g["a"] = r
+    geoms = session_geometry(imgs, a)
+    print(f"session geometry: radius {geoms[0]['a']:.2f} px, north {geoms[0]['north']:+.2f} deg")
     t0 = pt.parse_time(a.t0) if a.t0 else times[0] + sum((t - times[0] for t in times), dt.timedelta()) / len(times)
-    ref = geoms[int(np.argmin([abs((t - t0).total_seconds()) for t in times]))]
+    iref = int(np.argmin([abs((t - t0).total_seconds()) for t in times]))
+    ref = geoms[iref]
+    ref_img, _ = derotate_image(imgs[iref], omega(a) * (t0 - times[iref]).total_seconds(), ref, ref,
+                                a.flattening, a.de)
     outs, wgts = [], []
     for f, img, g, t in zip(a.inputs, imgs, geoms, times):
         delta = omega(a) * (t0 - t).total_seconds()
+        if not a.no_refine:
+            g.update(refine_centre(img, delta, g, ref_img, ref, a))
         o, w = derotate_image(img, delta, g, ref, a.flattening, a.de, a.mu_power)
         outs.append(o)
         wgts.append(w)
@@ -167,10 +186,7 @@ def cmd_rgb(a):
     files = [a.r, a.g, a.b] + ([a.l] if a.l else [])
     imgs = [pt.luminance(pt.load(f)) for f in files]
     times = get_times(files, a)
-    geoms = [measure(i, a) for i in imgs]
-    r = a.radius or float(np.median([g["a"] for g in geoms]))
-    for g in geoms:
-        g["a"] = r
+    geoms = session_geometry(imgs, a)
     t0 = pt.parse_time(a.t0) if a.t0 else times[1]                # WinJUPOS default: time of G (or L)
     ref = geoms[1] if not a.l else geoms[3]
     chans = []
@@ -219,8 +235,7 @@ def cmd_map(a):
     beta = np.arctan(b * np.tan(np.radians(lat)))                     # planetographic -> parametric
     num = np.zeros(lat.shape + ((3,) if imgs[0].ndim == 3 else ()), np.float32)
     den = np.zeros(lat.shape, np.float32)
-    for img, t in zip(imgs, times):
-        g = measure(img, a)
+    for img, t, g in zip(imgs, times, session_geometry(imgs, a)):
         cm = a.cm0 + omega(a) * (t - t0).total_seconds()
         dl = np.radians(cm - lon)                                     # offset west of the CM
         X, Y, Z = np.cos(beta) * np.cos(dl), np.cos(beta) * np.sin(dl), b * np.sin(beta)
@@ -265,6 +280,7 @@ def main():
     p.add_argument("-o", "--out", required=True)
     p.add_argument("--mu-power", type=float, default=1.0, help="weight = cos(emission)^p")
     p.add_argument("--naive", help="also save a centred-only average for comparison")
+    p.add_argument("--no-refine", action="store_true", help="trust the measured centres (no phase correlation)")
     p = sub.add_parser("rgb", parents=[common], help="combine R,G,B(,L) taken at different times")
     for c in "rgbl":
         p.add_argument(f"--{c}", required=c != "l")
