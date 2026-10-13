@@ -83,7 +83,7 @@ def main():
     os.makedirs(d, exist_ok=True)
     P = lambda n: os.path.join(d, n)
     caps = [("1830_0", "18:30:00"), ("1835_0", "18:35:00"), ("1840_0", "18:40:00")]
-    sharpen = ["--sharpen", "3,1.5,0.6,0.2", "--denoise", "0.12,0.05"]
+    sharpen = ["--sharpen", "0.5,0.5,0.3", "--denoise", "0.1,0.05"]
 
     if a.reuse and all(os.path.exists(P(f"2026-10-13-{t}-j.tif")) for t, _ in caps):
         print("1-3. reusing captures and stacks in", d)
@@ -100,7 +100,7 @@ def main():
         for tag, _ in caps:
             run("stack.py", P(f"pipp_{tag}.ser"), "-o", P(f"2026-10-13-{tag}-j.tif"),
                 "--save-global", P(f"global_{tag}.tif"), "--keep", "25%", "--ap-size", 32)
-    print("4. sharpen one stack (wavelets.py ~ RegiStax 6): RGB align + 4 layers")
+    print("4. sharpen one stack (wavelets.py ~ RegiStax 6): RGB align + 3 layers")
     run("wavelets.py", P("2026-10-13-1835_0-j.tif"), "-o", P("wav_1835.tif"), "--rgb-align", "--dering", 0.6, *sharpen)
     print("5. derotate the 3 stacks to 18:35 (derotate.py ~ WinJUPOS), then sharpen")
     stacks = [P(f"2026-10-13-{tag}-j.tif") for tag, _ in caps]
@@ -108,7 +108,7 @@ def main():
         "--naive", P("naive.tif"))
     for n in ("derot", "naive"):
         run("wavelets.py", P(f"{n}.tif"), "-o", P(f"{n}_wav.tif"), "--rgb-align", "--dering", 0.6,
-            "--sharpen", "4,2,0.7,0.2", "--denoise", "0.10,0.04")
+            *sharpen)
 
     truth = np.load(P("truth_1835_0.npy"))
     ser = pt.SerReader(P("pipp_1835_0.ser"))

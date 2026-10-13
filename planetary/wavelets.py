@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """RegiStax 6 style wavelet sharpening of a stacked planetary image (+ RGB align, balance, dering).
 
-  python planetary/wavelets.py stack.tif -o sharp.tif --sharpen 3,2,1,0.5,0,0 --denoise 0.15,0.1
-  python planetary/wavelets.py stack.tif -o sharp.png --scheme linear --initial 1 --step 1 --sharpen 4,3,2,1
+  python planetary/wavelets.py stack.tif -o sharp.tif --sharpen 0.5,0.5,0.3 --denoise 0.1,0.05
+  python planetary/wavelets.py stack.tif -o sharp.png --scheme linear --initial 1 --step 1 --sharpen 0.6,0.5,0.3,0.1
   python planetary/wavelets.py stack.tif -o sharp.tif --rgb-align --balance auto --dering 0.8 --gamma 0.9
   python planetary/wavelets.py stack.tif --dump layers/                    # inspect the six layers
 
@@ -115,8 +115,8 @@ def main():
     ap.add_argument("--scheme", choices=("dyadic", "linear"), default="dyadic")
     ap.add_argument("--initial", type=float, default=1.0, help="scale of layer 1 (px)")
     ap.add_argument("--step", type=float, default=1.0, help="linear scheme increment")
-    ap.add_argument("--sharpen", type=floats, default=[3, 1.5, 0.6, 0.2, 0, 0], help="per-layer gains")
-    ap.add_argument("--denoise", type=floats, default=[0.12, 0.05], help="per-layer denoise (0..1)")
+    ap.add_argument("--sharpen", type=floats, default=[0.5, 0.5, 0.3, 0, 0, 0], help="per-layer gains")
+    ap.add_argument("--denoise", type=floats, default=[0.1, 0.05], help="per-layer denoise (0..1)")
     ap.add_argument("--dering", type=float, default=0.0, help="0..1")
     ap.add_argument("--rgb-align", action="store_true")
     ap.add_argument("--balance", default="none", help="none | auto | r,g,b")
